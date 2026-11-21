@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Number Island Quest</title>
+<meta name="description" content="A cute 3D math puzzle adventure for 3rd graders — help Pip the otter restore Orchard Island! 數學小島大冒險">
+<meta name="theme-color" content="#7FD0FF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&display=swap">
+<style>
+/* VOICE: a bouncy cartoon world for 8-year-olds; warm, encouraging, never scolding
+   IDEA: a toon-outlined toy island; Pip the otter walks to each gadget and math makes it move
+   PICTURE: full-screen 3D island (Three.js) with cel shading and ink outlines
+   COLOUR and TYPE: sky blue, grass green, sun yellow, coral, berry pink; ink #3B2F4A; Fredoka + Noto Sans TC
+   LAYOUT: 3D fills the screen; top bar, prompt card, control tray at the bottom; English big, Chinese small */
+@font-face{font-family:Fredoka;src:url(fonts/fredoka-latin-500-normal.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:Fredoka;src:url(fonts/fredoka-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:Fredoka;src:url(fonts/fredoka-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
+:root{color-scheme:light;--ink:#3B2F4A;--soft:#6B5F7A;--sun:#FFD966;--grass:#9BE29B;--sky:#8FD3FE;--berry:#FF8FB1;--coral:#FF9F6B;--cream:#FFF7E8}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#A9DEFF;color:var(--ink);font:17px/1.3 Fredoka,"Noto Sans TC",system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+button,input{font-family:Fredoka,"Noto Sans TC",system-ui,sans-serif;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:4px solid #4D96FF;outline-offset:2px}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
+#ui>*{pointer-events:auto}
+.zh{font-family:"Noto Sans TC",system-ui,sans-serif;font-weight:500;color:var(--soft);font-size:.62em;display:block}
+.bar{display:flex;gap:10px;align-items:center;width:100%;max-width:1060px}
+.rbtn{width:52px;height:52px;border-radius:50%;border:4px solid var(--ink);background:#fff;display:grid;place-items:center;cursor:pointer;flex:none;padding:0;box-shadow:0 4px 0 rgba(59,47,74,.3)}
+.rbtn:active{transform:translateY(3px);box-shadow:none}.rbtn svg{width:26px;height:26px}.rbtn.off{opacity:.45}
+.pill{flex:1;background:#fff;border:4px solid var(--ink);border-radius:30px;padding:4px 18px;line-height:1.1;overflow:hidden}
+.pill b{display:block;font-size:clamp(18px,3.4vw,26px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stars{display:flex;gap:2px}.stars svg{width:28px;height:28px}
+.card{margin-top:8px;width:100%;max-width:1060px;background:#fff;border:4px solid var(--ink);border-radius:26px;padding:8px 14px;display:flex;gap:8px;align-items:center;box-shadow:0 6px 0 rgba(59,47,74,.2)}
+.card[hidden]{display:none}
+.card .txt{flex:1}.card .en{font-size:clamp(19px,3.4vw,28px);font-weight:700;line-height:1.15;display:block}.card .zh{font-size:clamp(14px,2.1vw,17px);margin-top:2px}
+.say{width:44px;height:44px;border-radius:50%;border:3px solid var(--ink);background:var(--sun);cursor:pointer;flex:none;font:700 15px Fredoka,"Noto Sans TC",sans-serif}
+.say.zhb{background:#fff}
+.spacer{flex:1;pointer-events:none!important}
+#mapTools{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+#mapTools[hidden]{display:none}
+#mapInfo{background:#fff;border:4px solid var(--ink);border-radius:22px;padding:3px 12px;font-weight:700;font-size:20px;display:flex;gap:6px;align-items:center}
+#mapInfo .gems{display:flex;gap:1px}#mapInfo svg{width:18px;height:18px}
+.tbtn{background:#fff;border:4px solid var(--ink);border-radius:22px;padding:3px 12px;font-weight:700;font-size:18px;cursor:pointer;line-height:1;min-height:44px;box-shadow:0 4px 0 rgba(59,47,74,.3)}
+.tbtn .zh{font-size:12px}.tbtn:active{transform:translateY(3px);box-shadow:none}
+.tbtn.save{background:var(--sun)}
+#panel{width:100%;max-width:900px;background:rgba(255,247,232,.95);border:4px solid var(--ink);border-radius:28px;padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 6px 0 rgba(59,47,74,.25);position:relative}
+#panel[hidden]{display:none}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
+.row.nowrap{flex-wrap:nowrap;width:100%}
+.tile{width:clamp(60px,10vw,84px);aspect-ratio:1;border-radius:20px;border:5px solid var(--ink);display:grid;place-items:center;font:700 clamp(30px,5.4vw,46px) Fredoka,system-ui,sans-serif;cursor:pointer;position:relative;box-shadow:0 6px 0 rgba(59,47,74,.3);background:var(--sun);color:var(--ink);padding:0}
+.tile.wide{width:auto;aspect-ratio:auto;height:clamp(60px,10vw,84px);padding:0 14px;font-size:clamp(26px,4.6vw,40px)}
+.tile::before{content:"";position:absolute;left:12%;right:12%;top:9%;height:12%;border-radius:9px;background:#fff;opacity:.55}
+.tile:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(59,47,74,.3)}
+.btn{font:700 clamp(20px,3vw,25px)/1.1 Fredoka,"Noto Sans TC",system-ui,sans-serif;background:var(--sun);border:4px solid var(--ink);border-radius:22px;padding:8px 22px;cursor:pointer;box-shadow:0 6px 0 var(--ink);min-height:54px}
+.btn .zh{color:var(--ink);opacity:.75;font-size:.6em}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
+.btn.green{background:var(--grass)}.btn.white{background:#fff}.btn.sm{font-size:18px;min-height:46px;padding:6px 16px}
+.stepper{display:flex;align-items:center;gap:6px;background:#fff;border:4px solid var(--ink);border-radius:20px;padding:4px 8px;font-weight:700;line-height:1.05}
+.stepper button{min-width:46px;height:46px;border-radius:23px;border:3px solid var(--ink);background:var(--sky);font:700 22px Fredoka,sans-serif;cursor:pointer;padding:0 6px}
+.stepper .v{font-size:32px;min-width:42px;text-align:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.chip{background:var(--grass);border:3px solid var(--ink);border-radius:16px;padding:2px 12px;font-weight:700;font-size:20px}
+.chip.empty{background:#fff;border-style:dashed;color:#B5AABF}
+.eq{font-size:28px;font-weight:700;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:0 14px}
+.roundline,.hint-line{font-weight:700;text-align:center;line-height:1.1}
+.frac{display:inline-flex;flex-direction:column;align-items:center;font-size:30px;font-weight:700;line-height:1;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:4px 14px}
+.frac span:first-child{border-bottom:4px solid var(--ink);padding:0 6px 2px}
+.clues{display:flex;flex-direction:column;gap:6px;width:100%}
+.clue{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:4px 12px;font-weight:700;font-size:clamp(16px,2.6vw,20px);display:flex;gap:10px;align-items:center;line-height:1.15}
+.clue .mk{width:30px;height:30px;border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;flex:none;font-size:17px;background:#fff}
+.clue.ok .mk{background:var(--grass)}.clue.no .mk{background:var(--berry)}
+.wheelbtns{display:flex;gap:16px}
+.wb{display:flex;flex-direction:column;gap:4px;align-items:center;font-weight:700;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:6px 8px}
+.wb button{width:56px;height:40px;border-radius:12px;border:3px solid var(--ink);background:var(--sun);font:700 18px sans-serif;cursor:pointer}
+.wb .digit{font-size:38px;line-height:1}
+.wb .wl{font-size:15px;line-height:1;text-align:center}.wb .wl .zh{font-size:12px}
+#hintBtn{position:absolute;right:-6px;top:-62px;border:4px solid var(--ink);background:#C9F2C9;border-radius:24px;padding:4px 12px 4px 6px;display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:700;font-size:18px;box-shadow:0 4px 0 rgba(59,47,74,.3);line-height:1}
+#hintBtn .zh{font-size:12px}
+#hintBtn i{width:34px;height:34px;border-radius:50%;background:var(--grass);border:3px solid var(--ink);display:grid;place-items:center;font-style:normal}
+#bubble{position:absolute;right:0;bottom:calc(100% + 66px);max-width:min(400px,92%);background:#fff;border:4px solid var(--ink);border-radius:22px;padding:10px 14px;font-weight:700;font-size:clamp(17px,2.5vw,20px);line-height:1.2;box-shadow:0 5px 0 rgba(59,47,74,.2)}
+#bubble[hidden]{display:none}#bubble .zh{font-size:.8em;margin-top:3px}
+#title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px;padding:0 16px calc(36px + env(safe-area-inset-bottom));pointer-events:none;text-align:center}
+#title[hidden]{display:none}
+#title h1{margin:0;font-size:clamp(40px,8vw,72px);line-height:1;color:#fff;-webkit-text-stroke:2.5px var(--ink);paint-order:stroke;text-shadow:0 6px 0 var(--ink)}
+#title h1 .zh{font-size:.42em;color:var(--ink);-webkit-text-stroke:0;text-shadow:none;margin-top:10px;font-weight:700}
+#title .row{pointer-events:auto}
+#title .btn{min-width:190px;position:relative}
+.badge{position:absolute;top:-12px;right:-10px;background:var(--berry);border:3px solid var(--ink);border-radius:14px;min-width:28px;height:28px;font-size:16px;display:grid;place-items:center;padding:0 6px}
+.badge:empty{display:none}
+#credit{font-size:13px;color:var(--soft);pointer-events:auto}
+.modal{position:fixed;inset:0;background:rgba(59,47,74,.35);display:grid;place-items:center;z-index:40;padding:16px 16px calc(16px + env(safe-area-inset-bottom));overflow:auto}
+.modal[hidden]{display:none}
+.mcard{background:var(--cream);border:5px solid var(--ink);border-radius:30px;padding:18px;max-width:480px;width:100%;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;overflow:hidden;position:relative;max-height:calc(100dvh - 32px);overflow-y:auto}
+.mcard h2{margin:0;font-size:clamp(28px,5vw,38px);line-height:1.05}.mcard h2 .zh{font-size:.5em}
+.bigstars svg{width:60px;height:60px}
+.gemline{display:flex;gap:4px;align-items:center;font-weight:700;justify-content:center;flex-wrap:wrap}.gemline svg{width:26px;height:26px}
+.lbl{font-weight:700;align-self:flex-start}
+input.code{font:600 18px Fredoka,"Noto Sans TC",sans-serif;width:100%;padding:10px 12px;border:3px solid var(--ink);border-radius:14px;user-select:text;-webkit-user-select:text}
+.codewrap{background:#fff;border:3px dashed var(--ink);border-radius:18px;padding:10px;width:100%;display:flex;flex-direction:column;gap:8px;align-items:center}
+.codebox{font:700 30px Fredoka,sans-serif;letter-spacing:3px;user-select:text;-webkit-user-select:text}
+.small{font-size:15px;line-height:1.25}.small .zh{font-size:13px}
+.slots{display:flex;flex-direction:column;gap:8px;width:100%}
+.slot{display:flex;gap:6px}
+.slotmain{flex:1;text-align:left;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;font-size:18px}
+.slotmain:active{background:#FFF2C4}
+.slotmain .meta{font-size:14px;color:var(--soft);display:flex;align-items:center;gap:4px}.slotmain .meta svg{width:16px;height:16px}
+.del{border:3px solid var(--ink);background:#fff;border-radius:14px;min-width:46px;font-weight:700;cursor:pointer}
+.del.sure{background:var(--berry);font-size:13px}
+.worlds{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.world{background:var(--wc);border:4px solid var(--ink);border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:2px;font-size:18px;text-align:left}
+.world.soon{background:#EEE9F2;color:#8A7F98;border-style:dashed}
+.world .meta{font-size:13px;display:flex;align-items:center;gap:3px}.world .meta svg{width:14px;height:14px}
+#toast{position:fixed;left:50%;top:calc(80px + env(safe-area-inset-top));transform:translateX(-50%);background:#fff;border:4px solid var(--ink);border-radius:20px;padding:8px 16px;font-weight:700;z-index:50;box-shadow:0 5px 0 rgba(59,47,74,.25);max-width:92vw;text-align:center}
+#toast[hidden]{display:none}
+#finale{position:fixed;inset:0;display:grid;place-items:center;z-index:45;pointer-events:none;overflow:hidden;padding:16px}
+#finale[hidden]{display:none}
+.fcard{pointer-events:auto;background:rgba(255,247,232,.96);border:6px solid var(--ink);border-radius:34px;padding:22px 24px;text-align:center;max-width:520px;width:100%;display:flex;flex-direction:column;gap:10px;align-items:center;animation:popin .7s cubic-bezier(.3,1.6,.5,1)}
+.fcard h1{margin:0;font-size:clamp(40px,8vw,60px);line-height:1;color:#fff;-webkit-text-stroke:2.5px var(--ink);paint-order:stroke;text-shadow:0 5px 0 var(--ink)}
+.fcard h1 .zh{font-size:.45em;color:var(--ink);-webkit-text-stroke:0;text-shadow:none;margin-top:6px;font-weight:700}
+.fcard .big{font-size:22px;font-weight:700;margin:0}
+.fcard .medal svg{width:90px;height:90px;animation:spin 3s linear infinite}
+.fcard .badge{position:static;background:var(--sun);font-size:20px;height:auto;padding:6px 14px;border-radius:18px;display:block}
+.fcard .badge .zh{font-size:14px}
+@keyframes popin{from{transform:scale(.3);opacity:0}}
+@keyframes spin{to{transform:rotateY(360deg)}}
+.confetti{position:absolute;width:10px;height:16px;top:-20px;animation:fall 1.8s linear forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.shake{animation:shake .4s}@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+#loading{position:fixed;inset:0;display:grid;place-items:center;font-size:24px;font-weight:700;background:#A9DEFF;z-index:60;text-align:center}
+#err{position:fixed;left:10px;bottom:10px;right:10px;background:#fff;border:3px solid #c33;border-radius:12px;padding:8px;font-size:14px;display:none;z-index:99}
+@media (max-width:600px){.rbtn{width:44px;height:44px;border-width:3px}.stars svg{width:20px;height:20px}.pill{padding:3px 10px}#panel{padding:10px 8px}.stepper .v{font-size:26px}.stepper button{min-width:40px;height:40px}.worlds{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.confetti,.fcard,.fcard .medal svg{animation:none!important}}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/addons/"}}</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div class="bar">
+    <button class="rbtn" id="homeBtn" aria-label="Back"><svg viewBox="0 0 26 26"><path d="M3 13 13 4l10 9v10H3z" fill="#FF9F6B" stroke="#3B2F4A" stroke-width="2.6" stroke-linejoin="round"/></svg></button>
+    <div class="pill" id="pill"><b>Number Island Quest</b><span class="zh">數學小島大冒險</span></div>
+    <div class="stars" id="barStars"></div>
+    <button class="rbtn" id="sfxBtn" aria-label="Sound effects"><svg viewBox="0 0 26 26"><path d="M4 10h5l7-6v18l-7-6H4z" fill="#8FD3FE" stroke="#3B2F4A" stroke-width="2.4" stroke-linejoin="round"/><path d="M19 9q3 4 0 8" fill="none" stroke="#3B2F4A" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+    <button class="rbtn" id="musicBtn" aria-label="Music"><svg viewBox="0 0 26 26"><path d="M10 19V5l11-2v14" fill="none" stroke="#3B2F4A" stroke-width="2.6"/><circle cx="7" cy="19" r="3.5" fill="#FF8FB1" stroke="#3B2F4A" stroke-width="2.4"/><circle cx="18" cy="17" r="3.5" fill="#FF8FB1" stroke="#3B2F4A" stroke-width="2.4"/></svg></button>
+  </div>
+  <div class="card" id="card" hidden><div class="txt" id="prompt"></div><button class="say" id="sayEn" aria-label="Read in English">EN</button><button class="say zhb" id="sayZh" aria-label="用中文念">中</button></div>
+  <div id="mapTools" hidden><div id="mapInfo"></div><button class="tbtn save" id="saveBtn">Save<span class="zh">存檔</span></button><button class="tbtn" id="worldBtn">Worlds<span class="zh">世界</span></button></div>
+  <div class="spacer"></div>
+  <div id="panel" hidden><button id="hintBtn" aria-label="Hint"><i>?</i><span>Hint<span class="zh">提示</span></span></button><div id="bubble" hidden></div><div id="ctl" style="display:contents"></div></div>
+</div>
+<div id="title" hidden>
+  <h1>Number Island Quest<span class="zh">數學小島大冒險</span></h1>
+  <div class="row"><button class="btn green" id="newBtn">New Game ▶<span class="zh">開始新遊戲</span></button><button class="btn white" id="loadBtn">Load Game<span class="zh">讀取存檔</span><span class="badge"></span></button></div>
+  <div id="credit">Math for 3rd grade · 美國三年級數學</div>
+</div>
+<div id="finale" hidden></div>
+<div id="toast" hidden></div>
+<div class="modal" id="modal" hidden><div class="mcard" id="mcard"></div></div>
+<div id="loading">Loading the island…<br>小島載入中</div>
+<div id="err"></div>
+<script>window.addEventListener('error',e=>{const d=document.getElementById('err');d.style.display='block';d.textContent='Oops: '+e.message});
+if('serviceWorker' in navigator&&location.protocol==='https:'&&window.top===window)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+<script type="module" src="js/game.js"></script>
+</body>
+</html>

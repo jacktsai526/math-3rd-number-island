@@ -1,0 +1,16 @@
+{
+  "name": "Number Island Quest 數學小島大冒險",
+  "short_name": "Number Island",
+  "description": "A cute 3D math puzzle adventure for 3rd graders.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#A9DEFF",
+  "theme_color": "#7FD0FF",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
